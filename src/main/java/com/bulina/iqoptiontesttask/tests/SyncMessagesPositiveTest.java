@@ -70,14 +70,16 @@ public class SyncMessagesPositiveTest extends TestBase {
 
     //---------------------------------------------------------------------------------------------------
 
+    AtomicBoolean isTestPassed;
+
     @Test(groups = {"P0"}, description = "Positive scenario, ws client receive sync messages each eacond")
     public void testWsClientShouldRecieveTimeSyncMessagesEachSecond() throws InterruptedException, IOException {
 
         long testDurationInSeconds = 10;
-
+        long waitTimeFrameInMs = 50;
 
         AtomicBoolean isFirstMsg = new AtomicBoolean(true);
-        AtomicBoolean isTestPassed = new AtomicBoolean(false);
+        isTestPassed = new AtomicBoolean(true);
         TimerTask timerTask = new QueueChecker();
         Timer timer = new Timer(true);
 
@@ -88,8 +90,8 @@ public class SyncMessagesPositiveTest extends TestBase {
                 if (msg.getType() != Message.MESSAGE_TYPE.SYNC) {
                     return;
                 } else if (isFirstMsg.get()) {
-                    // let's give 20 ms for message waiting
-                    timer.scheduleAtFixedRate(timerTask, 1020, 1000);
+                    // let's give 'waitTimeFrameInMs' ms for message waiting
+                    timer.scheduleAtFixedRate(timerTask, 1000 + waitTimeFrameInMs, 1000);
                     //System.out.println("TimerTask started as demon at: " + new Date().getTime());
                     isFirstMsg.getAndSet(false);
                     wsClient.getSyncMsgQueue().poll();
@@ -100,11 +102,12 @@ public class SyncMessagesPositiveTest extends TestBase {
         logAction("Listening and queuing timeSync messages from server and close connection after %s seconds...", testDurationInSeconds);
         try {
             Thread.sleep(testDurationInSeconds * 1000);
-        }
-        finally {
+        } finally {
             wsClient.closeConnection();
             timer.cancel();
         }
+
+        Assert.assertTrue(isTestPassed.get(), "Test failed");
         logPassed();
     }
 
@@ -113,20 +116,23 @@ public class SyncMessagesPositiveTest extends TestBase {
         @Override
         public void run() {
             logAction("Checking for new message at %s ...", new Date().getTime());
-            Assert.assertFalse(true);
+
             ConcurrentLinkedQueue<Message> queue = wsClient.getSyncMsgQueue();
-            Assert.assertFalse(queue.isEmpty(),
-                    "No new sync messages received, messages count: " + queue.size());
+            if (queue.isEmpty()) {
+                Assert.assertFalse(true, "No new sync messages received, messages count: " + queue.size());
+                isTestPassed.getAndSet(false);
 
-            Assert.assertFalse((queue.size() > 1),
-                    "More than one new sync messages received, messages count: " + queue.size());
+            } else if (queue.size() > 1) {
+                Assert.assertFalse(true, "More than one new sync messages received, messages count: " + queue.size());
+                isTestPassed.getAndSet(false);
 
-            logAction("Message received: " + queue.poll().toJsonString());
+            } else {
+                logAction("Message received: " + queue.poll().toJsonString());
+            }
 
             //System.out.println("Timer task completed at: " + new Date().getTime());
         }
     }
-
 
     //---------------------------------------------------------------------------------------------------
 
