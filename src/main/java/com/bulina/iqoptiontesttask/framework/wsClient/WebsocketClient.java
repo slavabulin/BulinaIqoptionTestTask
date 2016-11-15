@@ -50,8 +50,8 @@ public class WebsocketClient {
     @OnMessage
     public void onMessage(String message, Session session) {
         logger.info("Message from ws: " + message);
-
         Message msg = Message.Builder().buildFromString(message);
+
         if (msg == null) {
             logger.info(String.format("Message is null"));
 
@@ -66,6 +66,10 @@ public class WebsocketClient {
             syncMsgQueue.add(msg);
             System.out.println(String.format("SyncMessage added to he queue: %s, queue size %s",
                     msg.getInitial(), syncMsgQueue.size()));
+        }
+
+        if (this.messageHandler != null) {
+            this.messageHandler.handleMessage(msg);
         }
     }
 
@@ -110,6 +114,18 @@ public class WebsocketClient {
         logger.info("Session closed at: " + new Date().getTime());
         this.session = null;
     }
+
+
+    private MessageHandler messageHandler;
+
+    public void addMessageHandler(MessageHandler msgHandler) {
+        this.messageHandler = msgHandler;
+    }
+
+    public static interface MessageHandler {
+        public void handleMessage(Message msg);
+    }
+
 
     public WebsocketClient(SNIFFER_MODE mode) {
         try {

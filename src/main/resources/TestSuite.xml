@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="IQ Oprion test teask">
+<suite name="Default Suite">
     <test name="IqoptionTestTask">
         <classes>
-            <class name="com.bulina.iqoptiontesttask.tests.SyncMessagesTest"/>
+            <class name="com.bulina.iqoptiontesttask.tests.BugsTest"/>
+            <class name="com.bulina.iqoptiontesttask.tests.SyncMessagesNegativeTest"/>
+            <class name="com.bulina.iqoptiontesttask.tests.SyncMessagesPositiveTest"/>
         </classes>
     </test> <!-- IqoptionTestTask -->
 </suite> <!-- Default Suite -->
